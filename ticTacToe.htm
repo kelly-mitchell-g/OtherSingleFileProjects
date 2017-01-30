@@ -1,0 +1,540 @@
+<!DOCTYPE HTML>
+<html lang="en-us">
+<head>
+
+<title>Tic Tac Toe</title>
+<style>
+div.colRight {
+    position: absolute;
+    left: 150px;
+    top: 10px;
+}
+td input{ width: 15px;}
+</style>
+<script type="text/javascript">
+var board = ["","","","","","","","",""];
+var team = 0;
+var compTeam = 1;
+var diff = "easy";
+var gameStarted = false;
+var newBoard = ["","","","","","","","",""];
+var turnCount = 0;
+var teamSymbol = ['X','O'];
+var compMove = false;
+
+function drawBoard() {
+	for(var i = 0;i < 9;i++){
+		if(board[i] == 'X' || board[i] == 'O')
+			switch(i){
+				case 0:
+					document.getElementById("zero").value = board[0];
+					break;
+				case 1:
+					document.getElementById("one").value = board[1];
+					break;
+				case 2:
+					document.getElementById("two").value = board[2];
+					break;
+				case 3:
+					document.getElementById("three").value = board[3];
+					break;
+				case 4:
+					document.getElementById("four").value = board[4];
+					break;
+				case 5:
+					document.getElementById("five").value = board[5];
+					break;
+				case 6:
+					document.getElementById("six").value = board[6];
+					break;
+				case 7:
+					document.getElementById("seven").value = board[7];
+					break;
+				case 8:
+					document.getElementById("eight").value = board[8];
+					break;
+			}
+	}
+}
+
+function computerTurn(){
+if(compTeam == 0 && turnCount <= 4 || compTeam == 1 && turnCount <= 3){
+if(diff=="easy")
+	easy(compTeam);
+else if(diff=="med")
+	med(compTeam);
+else if(diff=="hard")
+	hard();
+}}
+
+function easy(runTeam){
+var moved = false;
+do{
+unCommitBoard();
+var move = Math.floor(Math.random() * 9) + 0;
+if(newBoard[move] == ' ' || newBoard[move] == ''){
+newBoard[move] = teamSymbol[runTeam];
+moved = true;}}
+while(!moved);
+commitBoard();
+}
+
+function med(runTeam){
+var moved = false;
+do{
+unCommitBoard();
+if(turnCount == 0){//it doesnt matter where we go first so do it randomly
+	easy(runTeam);
+	return;}
+var index = blockRecommender();
+if(index == 10){
+	easy(runTeam);
+	return;}
+else
+	if(newBoard[index] == ' ' || newBoard[index] == ''){
+	newBoard[index] = teamSymbol[runTeam];
+	moved = true;}}
+	while(!moved);
+commitBoard();
+}
+
+function hard(){
+var runTeam = compTeam;
+var moved = false;
+var outBoard = [0,0,0,0,0,0,0,0,0];
+for(var i = 0; i <9; i++){
+	outBoard[i]=board[i];
+}
+do{
+var winResults = autoPlay(outBoard);
+var largest = Math.max.apply(Math, winResults);
+var index = blockRecommender();
+var occupied = true;
+if (index==10)
+do{
+occupied = true;
+largest = Math.max.apply(Math, winResults);
+for(var i = 0; i<9;i++){
+	if(winResults[i] != largest)
+		index = winResults.indexOf(largest);
+	else
+		index = 10;
+		}
+if(newBoard[index] == ' ' || newBoard[index] == '')
+	occupied=false;
+else
+	winResults[index] = 0;
+}while(occupied)
+if(index == 10){
+	easy(runTeam);
+	return;}
+else
+	if(newBoard[index] == ' ' || newBoard[index] == ''){
+	newBoard[index] = teamSymbol[runTeam];
+	moved = true;}
+	}while(!moved);
+commitBoard();
+}
+
+
+function validateMove(){
+if(isSame())
+	return false;
+	for(var i = 0; i < 9; i++){
+	if(newBoard[i] == 'O' || newBoard[i] == ' ' || newBoard[i] == '' || newBoard[i] == 'X'){
+	if(board[i] == '' || board[i] == ' ')
+		return true;
+	if(board[i]=="X"){
+		if(newBoard[i] == "O") // || newBoard[i] == "X")
+			return false;}
+	if(board[i]=="O"){
+		if(newBoard[i] == "X") // || newBoard[i] == "O")
+			return false;}
+			}
+	else
+		return false}
+	
+	return true;
+}
+
+function isWin(inBoard){
+for(var v = 0; v < 2; v++)
+for(var i = 0; i < 9; i++){
+	if(inBoard[i] == teamSymbol[v]){
+			if(i==0||i==2||i==6||i==8){//diagonal win
+				if(inBoard[4] == teamSymbol[v]){//if middle is not a matching field skip diagonals
+					if(i==0||i==8){//top left to lower right
+						if(inBoard[0] == teamSymbol[v])
+							if(inBoard[8] == teamSymbol[v])
+								return teamSymbol[v];
+					}
+					if(i==2||i==6){//top right to lower left
+						if(inBoard[2] == teamSymbol[v])
+							if(inBoard[6] == teamSymbol[v])
+								return teamSymbol[v];
+					}
+				}
+			}
+			if(i%3==0)//row search
+				if(inBoard[i] == teamSymbol[v])
+					if(inBoard[i+1] == teamSymbol[v])
+						if(inBoard[i+2] == teamSymbol[v])
+							return teamSymbol[v];
+			if(Math.floor(i/3)==0)//Column search
+				if(inBoard[i] == teamSymbol[v])
+					if(inBoard[i+3] == teamSymbol[v])
+						if(inBoard[i+6] == teamSymbol[v])
+							return teamSymbol[v];
+	}
+}
+//no win
+return '0';
+}
+
+function blockRecommender(){
+var needBlock = [0,0,0,0,0,0,0,0,0];
+var block = 0;
+//search each row
+for(var i = 0;i<9;i+=3){
+	block = 0;
+	if(board[i]==teamSymbol[0]||board[i]==teamSymbol[1])
+		block++;
+	if(board[i+1]==teamSymbol[0]||board[i+1]==teamSymbol[1])
+		block++;
+	if(board[i+2]==teamSymbol[0]||board[i+2]==teamSymbol[1])
+		block++;
+	if(block==2){
+	var send =[board[i],board[i+1],board[i+2]];
+	var value =blockFinder(send);
+	if(value==0)
+		if(board[i+1]==board[i+2])
+			needBlock[(value)+i]++;
+	if(value==1)
+		if(board[i]==board[i+2])
+			needBlock[(value)+i]++;
+	if(value==2)
+		if(board[i]==board[i+1])
+			needBlock[(value)+i]++;
+	}
+}
+//search each column
+for(var i = 0;i<3;i++){
+	block = 0;
+	if(board[i]==teamSymbol[0]||board[i]==teamSymbol[1])
+		block++;
+	if(board[i+3]==teamSymbol[0]||board[i+3]==teamSymbol[1])
+		block++;
+	if(board[i+6]==teamSymbol[0]||board[i+6]==teamSymbol[1])
+		block++;
+	if(block==2){
+	var send =[board[i],board[i+3],board[i+6]];
+	var value =blockFinder(send);
+	if(value==0)
+		if(board[i+3]==board[i+6])
+			needBlock[(value*3)+i]++;
+	if(value==1)
+		if(board[i]==board[i+6])
+			needBlock[(value*3)+i]++;
+	if(value==2)
+		if(board[i]==board[i+3])
+			needBlock[(value*3)+i]++;
+	}
+}
+//search each angle
+block =0;
+//search topleft to bottomright
+if(board[0]==teamSymbol[0]||board[0]==teamSymbol[1])
+	block++;
+if(board[4]==teamSymbol[0]||board[4]==teamSymbol[1])
+	block++;
+if(board[8]==teamSymbol[0]||board[8]==teamSymbol[1])
+	block++;
+if(block==2){
+	var send =[board[0],board[4],board[8]];
+	var value =blockFinder(send);
+	if(value==0)
+		if(board[4]==board[8])
+			needBlock[0]++;
+	if(value==1)
+		if(board[0]==board[8])
+			needBlock[4]++;
+	if(value==2)
+		if(board[4]==board[0])
+			needBlock[8]++;
+	}
+block =0;
+//search topright to bottomleft
+if(board[2]==teamSymbol[0]||board[2]==teamSymbol[1])
+	block++;
+if(board[4]==teamSymbol[0]||board[4]==teamSymbol[1])
+	block++;
+if(board[6]==teamSymbol[0]||board[6]==teamSymbol[1])
+	block++;
+if(block==2){
+	var send =[board[2],board[4],board[6]];
+	var value =blockFinder(send);
+	if(value==0){
+		if(board[4]==board[6])
+			needBlock[2]++;}
+	if(value==1){
+		if(board[2]==board[6])
+			needBlock[4]++;}
+	if(value==2){
+		if(board[4]==board[2])
+			needBlock[6]++;}
+}
+var largest = Math.max.apply(Math, needBlock);
+var index = needBlock.indexOf(largest);
+for(var i = 0; i<9;i++){
+	if(needBlock[i] != largest)
+		return index;
+}
+return 10;
+}
+
+function blockFinder(array){
+	return array.indexOf('');
+}
+
+function autoPlay(inBoard){
+var winBoard = [0,0,0,0,0,0,0,0,0];
+var tmpBoard = [0,0,0,0,0,0,0,0,0];
+var resultBoard =[0,0,0,0,0,0,0,0,0];
+for(var i = 0; i <9; i++){
+	tmpBoard[i]=inBoard[i];
+}
+var winIs = isWin(inBoard);
+if(winIs!='0'){
+	var isWinIs =winSpace(inBoard);
+	return isWinIs}
+for(var loc = 0;loc<9;loc++){
+	if(tmpBoard[loc]!='X'&&tmpBoard[loc]!='O'){
+	tmpBoard[loc] = 'X';
+	resultBoard = autoPlay(tmpBoard);
+	for(var tmp = 0; tmp <9; tmp++)
+		winBoard[tmp]+=resultBoard[tmp];
+	tmpBoard = inBoard;
+	tmpBoard[loc] = 'O';
+	resultBoard = autoPlay(tmpBoard);
+	for(var tmp = 0; tmp <9; tmp++)
+		winBoard[tmp]+=resultBoard[tmp];
+	}}
+	return winBoard;
+}
+
+
+function winSpace(inBoard){
+var winBoard = [0,0,0,0,0,0,0,0,0];
+var space = 0;
+var backupBoard = [0,0,0,0,0,0,0,0,0];
+var turnCountBackup = turnCount;
+//search each row
+for(var i = 0;i<9;i+=3){
+	space = 0;
+	if(inBoard[i]==teamSymbol[0]||inBoard[i]==teamSymbol[1])
+		space++;
+	if(inBoard[i+1]==teamSymbol[0]||inBoard[i+1]==teamSymbol[1])
+		space++;
+	if(inBoard[i+2]==teamSymbol[0]||inBoard[i+2]==teamSymbol[1])
+		space++;
+	if(space==3){
+		if(inBoard[i]==inBoard[i+1]&&inBoard[i+1]==inBoard[i+2]){
+			winBoard[i]++;
+			winBoard[i+1]++;
+			winBoard[i+2]++;
+		}			
+	}
+}
+//search each column
+for(var i = 0;i<3;i++){
+	space = 0;
+	if(inBoard[i]==teamSymbol[0]||inBoard[i]==teamSymbol[1])
+		space++;
+	if(inBoard[i+3]==teamSymbol[0]||inBoard[i+3]==teamSymbol[1])
+		space++;
+	if(inBoard[i+6]==teamSymbol[0]||inBoard[i+6]==teamSymbol[1])
+		space++;
+	if(space==3){
+		if(inBoard[i]==inBoard[i+3]&&inBoard[i+3]==inBoard[i+6]){
+			winBoard[i]++;
+			winBoard[i+3]++;
+			winBoard[i+6]++;
+		}	
+	}
+}
+//search each angle
+space =0;
+//search topleft to bottomright
+if(inBoard[0]==teamSymbol[0]||inBoard[0]==teamSymbol[1])
+	space++;
+if(inBoard[4]==teamSymbol[0]||inBoard[4]==teamSymbol[1])
+	space++;
+if(inBoard[8]==teamSymbol[0]||inBoard[8]==teamSymbol[1])
+	space++;
+if(space==3){
+		if(inBoard[0]==inBoard[4]&&inBoard[4]==inBoard[8]){
+			winBoard[0]++;
+			winBoard[4]++;
+			winBoard[8]++;
+		}
+}		
+space =0;
+//search topright to bottomleft
+if(inBoard[2]==teamSymbol[0]||inBoard[2]==teamSymbol[1])
+	space++;
+if(inBoard[4]==teamSymbol[0]||inBoard[4]==teamSymbol[1])
+	space++;
+if(inBoard[6]==teamSymbol[0]||inBoard[6]==teamSymbol[1])
+	space++;
+if(space==3){
+		if(inBoard[2]==inBoard[4]&&inBoard[4]==inBoard[6]){
+			winBoard[2]++;
+			winBoard[4]++;
+			winBoard[6]++;
+		}
+}	
+return winBoard;
+}
+
+function winResult(result){
+if(result == teamSymbol[team])
+	document.getElementById("results").innerHTML = "You Won!";
+else if(result == 'd')
+	document.getElementById("results").innerHTML = "DRAW";
+else
+	document.getElementById("results").innerHTML = "You Lost!";
+}
+
+function isSame(){
+var same = true;
+for(var i = 0; i < 9; i++)
+	if(board[i] != newBoard[i]);
+		same = false;
+return same;
+}
+
+function getBoard(){
+newBoard[0] = document.getElementById("zero").value.toUpperCase();
+newBoard[1] = document.getElementById("one").value.toUpperCase();
+newBoard[2] = document.getElementById("two").value.toUpperCase();
+newBoard[3] = document.getElementById("three").value.toUpperCase();
+newBoard[4] = document.getElementById("four").value.toUpperCase();
+newBoard[5] = document.getElementById("five").value.toUpperCase();
+newBoard[6] = document.getElementById("six").value.toUpperCase();
+newBoard[7] = document.getElementById("seven").value.toUpperCase();
+newBoard[8] = document.getElementById("eight").value.toUpperCase();
+
+}
+
+function commitBoard(){
+
+for(var i = 0; i < 9; i++){
+board[i]=newBoard[i];
+}
+}
+
+function unCommitBoard(){
+
+for(var i = 0; i < 9; i++){
+newBoard[i]=board[i];
+}
+}
+
+function check(){
+	if(turnCount > 1 && turnCount < 4){
+	var result = isWin(board);
+		if(result != '0'){
+			winResult(result);
+			drawBoard();
+			return true;
+		}	}
+	if(turnCount == 4||(turnCount==3&&compTeam==0&&compMove==true)){
+		winResult('d');
+		return true;
+	}		
+	return false;
+}
+
+function go() {
+compMove = false;
+if (!gameStarted){
+	document.getElementById('errors').innerHTML = "Click Start Game! Before making a move.";
+	return;
+}
+else
+	document.getElementById('errors').innerHTML = "";
+getBoard();
+
+//check values of boards
+document.getElementById("test").value = newBoard;
+document.getElementById("test2").value = board;
+
+
+if(validateMove()){
+	commitBoard();
+	if(check()){
+			return;
+		}	
+	computerTurn();
+	compMove =true;
+if(check()){
+			return;
+		}
+	turnCount++;
+	}
+else
+	document.getElementById('errors').innerHTML = "You cannot change the board after it has been moved.";
+
+drawBoard();
+
+//check values of boards
+document.getElementById("test3").value = board;
+}
+
+function startGame() {
+gameStarted = true;
+if(document.getElementById('O').checked)
+	team = 1;
+if(document.getElementById("med").checked)
+	diff = "med";
+else if(document.getElementById("hard").checked)
+	diff = "hard";
+if(team == 1){
+	compTeam = 0;
+	computerTurn();
+	drawBoard();
+	}
+}
+</script>
+<meta charset="utf-8">
+</head>
+
+<body>  
+<div id="choices">Choose your side:</br>
+  <input type="radio" name="team" value="X" id="X" checked> X<br>
+  <input type="radio" name="team" value="O" id="O"> O<br><br><br>
+  <div id="colRight" style="position: absolute;left: 150px;top: 8px;">
+Choose Difficulty:<br>
+  <input type="radio" name="diff" value="easy" id="easy" checked> Easy<br>
+  <input type="radio" name="diff" value="med" id="med"> Medium<br>
+  <input type="radio" name="diff" value="hard" id="hard"> Hard
+  </div>
+  <button type="button" onclick="startGame()">Start Game</button>
+</div>
+<div id="errors"></div>
+<div id="board">
+<table>
+<tr><td></td><td>A</td><td></td><td>B</td><td></td><td>C</td>
+<tr><td>1</td><td id="0"><input type="text" id="zero"></td>	<td>|</td>	<td id="1"><input type="text" id="one"></td>	<td>|</td>	<td id="2"><input type="text" id="two"></td></tr>
+<tr><td></td><td>--</td>			<td>+</td>	<td>--</td>			<td>+</td>	<td>--</td></tr>
+<tr><td>2</td><td id="3"><input type="text" id="three"></td>	<td>|</td>	<td id="4"><input type="text" id="four"></td>	<td>|</td>	<td id="5"><input type="text" id="five"></td></tr>
+<tr><td></td><td>--</td>			<td>+</td>	<td>--</td>			<td>+</td>	<td>--</td></tr>
+<tr><td>3</td><td id="6"><input type="text" id="six"></td><td>|</td>	<td id="7"><input type="text" id="seven"></td>	<td>|</td>	<td id="8"><input type="text" id="eight"></td></tr>
+</table>
+</div>
+<h1><div id="results"></div></h1>
+<button onclick="go()" type="button" >Move</button>
+	<div id="sum"></div>
+	<input type="text" id="test"><input type="text" id="test2"><input type="text" id="test3">
+</body>
+</html>
